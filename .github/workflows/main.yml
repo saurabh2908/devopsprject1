@@ -1,0 +1,34 @@
+name: Node.js CI/CD
+
+on:
+  push:
+    branches:
+      - main  # Trigger the workflow on push to the 'main' branch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest  # This runs the job on the latest Ubuntu image
+
+    steps:
+    # Step 1: Check out the code from GitHub
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    # Step 2: Set up Node.js
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '18.20.4'  # Use Node.js version 16 or adjust to your preference
+
+    # Step 3: Install dependencies
+    - name: Install dependencies
+      run: npm install
+
+    # Step 4: Run tests (assuming you have tests)
+    - name: Run tests
+      run: npm test  # You can replace this with your actual test script
+
+    # Step 5: (Optional) Build Docker image (if using Docker)
+    # - name: Build Docker image
+    #   run: |
+    #     docker build -t your-dockerhub-username/my-nodejs-app .
