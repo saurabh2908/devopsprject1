@@ -3,32 +3,62 @@ name: Node.js CI/CD
 on:
   push:
     branches:
-      - main  # Trigger the workflow on push to the 'main' branch
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build:
-    runs-on: ubuntu-latest  # This runs the job on the latest Ubuntu image
+    runs-on: ubuntu-latest
 
     steps:
-    # Step 1: Check out the code from GitHub
+    # Checkout code from GitHub repository
     - name: Checkout code
       uses: actions/checkout@v2
 
-    # Step 2: Set up Node.js
+    # Set up Node.js
     - name: Set up Node.js
       uses: actions/setup-node@v2
       with:
-        node-version: '18.20.4'  # Use Node.js version 16 or adjust to your preference
+        node-version: '18.20.4'
 
-    # Step 3: Install dependencies
+    # Install dependencies
     - name: Install dependencies
       run: npm install
 
-    # Step 4: Run tests (assuming you have tests)
+    # Run tests
     - name: Run tests
-      run: npm test  # You can replace this with your actual test script
+      run: npm test
 
-    # Step 5: (Optional) Build Docker image (if using Docker)
-    # - name: Build Docker image
-    #   run: |
-    #     docker build -t your-dockerhub-username/my-nodejs-app .
+    # Deploy to AWS EC2 after tests pass
+    - name: Deploy to AWS EC2
+      if: success()  # Deploy only if tests pass
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        EC2_INSTANCE_IP: ${{ secrets.EC2_INSTANCE_IP }}
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      run: |
+        # Write SSH private key to file
+        echo "$SSH_PRIVATE_KEY" > private_key.pem
+        chmod 600 private_key.pem
+
+        # SSH into EC2 instance and deploy
+        ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@$EC2_INSTANCE_IP << 'EOF'
+          # Navigate to the app directory
+          cd /home/ubuntu/devopsprject1
+
+          # Pull the latest changes from GitHub
+          git pull origin main
+
+          # Install dependencies
+          npm install
+
+          # Restart the application using PM2 (or use your app manager)
+          pm2 restart app || pm2 start index.js --name "app"
+
+        EOF
+
+        # Clean up private key
+        rm private_key.pem
