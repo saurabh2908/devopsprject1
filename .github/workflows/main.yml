@@ -47,7 +47,7 @@ jobs:
         # SSH into EC2 instance and deploy
         ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@$EC2_INSTANCE_IP << 'EOF'
           # Navigate to the app directory
-          cd /devopsprject1
+          cd devopsprject1
 
           # Pull the latest changes from GitHub
           git pull origin main
